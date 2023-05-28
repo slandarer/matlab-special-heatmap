@@ -1,4 +1,5 @@
-classdef SHeatmap
+classdef SHeatmap < handle
+% Copyright (c) 2023, Zhaoxu Liu / slandarer
 % =========================================================================
 % Format
 % -------------------------------------------------------------------------
@@ -369,7 +370,17 @@ classdef SHeatmap
                 set(obj.CLabelHdl(n),varargin{:})
             end
         end
+        % 2023-05-28 更新
+        function setTextFormat(obj,func)
+            for row=1:size(obj.Data,1)
+                for col=1:size(obj.Data,2)
+                    tStr=func(obj.Data(row,col));
+                    set(obj.textHdl(row,col),'String',tStr)
+                end
+            end
+        end
     end
+% Copyright (c) 2023, Zhaoxu Liu / slandarer
 % =========================================================================
 % @author : slandarer
 % 公众号  : slandarer随笔 
