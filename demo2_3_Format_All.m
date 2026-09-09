@@ -27,6 +27,7 @@ end
 % 'asq'         : auto-size square          ：自带调整大小的方形
 % 'acirc'       : auto-size circular        ：自带调整大小的圆形
 % 'arrect'      : auto-size rounded rect    : 自带调整大小的圆角矩形
+% 'bubble'      : bubble                    : 气泡图
 % 'txt'(text)   : colored text              : 带颜色的文本
 % '3d'          : 3D bar                    : 三维柱状图
 % 'cust'        : custom shape              : 自定义形状
@@ -34,7 +35,7 @@ end
 
 Format = {'sq','sqfull','shade','rrect','c2rect','pie','donut','circ','bcirc','oval', ...
     'hex','star','moon','arrow','teardrop','bar','barh','tril','triu','trilr','triul', ...
-    'asq','acirc','arrect','txt','3d','cust','acust'};
+    'asq','acirc','arrect','bubble','txt','3d','cust','acust'};
 A = rand(12, 12);
 B = rand(12, 12) - .5;
 

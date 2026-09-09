@@ -52,6 +52,7 @@ classdef SHeatmap < handle
 %     'asq'         : auto-size square          ：自带调整大小的方形
 %     'acirc'       : auto-size circular        ：自带调整大小的圆形
 %     'arrect'      : auto-size rounded rect    : 自带调整大小的圆角矩形
+%     'bubble'      : bubble                    : 气泡图
 %     'txt'(text)   : colored text              : 带颜色的文本
 %     '3d'          : 3D bar                    : 三维柱状图
 %     'cust'        : custom shape              : 自定义形状
@@ -94,6 +95,7 @@ classdef SHeatmap < handle
 %   showStars                - Overlay significance stars on value labels based on p-values (根据 p 值在数值标签上叠加显著性星标)
 %   setBox                   - Set properties for box handle (设置框样式)
 %   setGrid                  - Set properties for grid handle (设置网格样式)
+%   setExtGrid               - Set properties for extended grid handle (设置扩展网格样式)
 %   setFrame                 - Set properties for frame and tick handle (设置外轮廓样式)
 %   setPatch                 - Set properties for all patch objects (为所有填充图形设置属性)
 %   setRowLabel              - Set properties for all row label text objects (设置所有行标签的属性)
@@ -134,7 +136,7 @@ classdef SHeatmap < handle
                      'GroupSep', 'RowGroup', 'ColGroup', ...
                      'TickLength','TickLabelOffset','GroupLabelOffset', ...
                      'RowGroupName', 'ColGroupName', 'ShapeFlipX', 'ShapeFlipY', ...
-                     'Format3DHeight', 'Format3DTheta','RowLabelLocation','ColLabelLocation'}
+                     'Format3DHeight', 'Format3DTheta','BubbleSize','RowLabelLocation','ColLabelLocation'}
         Data
         PVal
 
@@ -163,6 +165,7 @@ classdef SHeatmap < handle
         % 'asq'         : auto-size square          ：自带调整大小的方形
         % 'acirc'       : auto-size circular        ：自带调整大小的圆形
         % 'arrect'      : auto-size rounded rect    : 自带调整大小的圆角矩形
+        % 'bubble'      : bubble                    : 气泡图
         % 'txt'(text)   : colored text              : 带颜色的文本
         % '3d'          : 3D bar                    : 三维柱状图
         % 'cust'        : custom shape              : 自定义形状
@@ -220,6 +223,7 @@ classdef SHeatmap < handle
 
         
         gridHdl           % Grid handle (网格线句柄)
+        extGridHdl        % Extended grid handle (扩展网格线句柄)
         pieHdl;           % Pie chart handle (饼图句柄)
         patchHdl;         % Patch handle (填充图形句柄)
         textHdl;          % Text (data value) handle (文本句柄)
@@ -258,6 +262,7 @@ classdef SHeatmap < handle
                        .26, .60, .71; .20, .53, .74; .26, .45, .70;
                        .31, .38, .67; .37, .31, .64];
         RP; CP; FX; FY; BX; BY; 
+        EGX = nan; EGY = nan;
         GX = nan; GY = nan; 
         SX = 1; SY = 1;
         
@@ -274,6 +279,7 @@ classdef SHeatmap < handle
 
         Format3DHeight = 2
         Format3DTheta = pi/3.5
+        BubbleSize = [.1, 1.5];
     end
 
     properties (Hidden, SetObservable)
@@ -405,8 +411,8 @@ classdef SHeatmap < handle
 
             obj.XLim = [obj.CP(1) - .5, obj.CP(end) + .5];
             obj.YLim = [obj.RP(1) - .5, obj.RP(end) + .5];
-            obj.ax.XLim = obj.XLim;
-            obj.ax.YLim = obj.YLim;
+            obj.ax.XLim = [min(obj.ax.XLim(1), obj.XLim(1)), max(obj.ax.XLim(2), obj.XLim(2))];
+            obj.ax.YLim = [min(obj.ax.YLim(1), obj.YLim(1)), max(obj.ax.YLim(2), obj.YLim(2))];
             obj.ax.XTick = obj.CP;
             obj.ax.YTick = obj.RP;
             obj.ax.XTickLabel = compose('%d', 1:size(obj.Data, 2));
@@ -431,6 +437,7 @@ classdef SHeatmap < handle
             end
 
             % Draw grid lines (绘制网格线)
+            obj.extGridHdl = plot(obj.ax, nan, nan, 'LineWidth', 0.8, 'Color', [.7,.7,.7], 'LineStyle','-');
             obj.gridHdl = plot(obj.ax, nan, nan, 'LineWidth', 0.8, 'Color', [0,0,0], 'LineStyle','--');
             
 
@@ -518,6 +525,11 @@ classdef SHeatmap < handle
                     obj.PatchX = obj.SX.*repmat(cos(baseT).*.92.*.5, [1, mn]).*repmat(tRatio, [length(baseT), 1]) + repmat(cols, [length(baseT), 1]);
                     obj.PatchY = obj.SY.*repmat(sin(baseT).*.92.*.5, [1, mn]).*repmat(tRatio, [length(baseT), 1]) + repmat(rows, [length(baseT), 1]);
                     obj.patchHdl = fill(obj.ax, obj.PatchX, obj.PatchY, datas(:), 'EdgeColor','none', 'LineWidth',.8);
+                    obj.patchHdl = reshape(obj.patchHdl, sz);
+                case 'bubble'
+                    obj.PatchX = obj.SX.*repmat(cos(baseT).*.92.*.5, [1, mn]).*repmat(obj.BubbleSize(1) + sqrt(tRatio).*diff(obj.BubbleSize), [length(baseT), 1]) + repmat(cols, [length(baseT), 1]);
+                    obj.PatchY = obj.SY.*repmat(sin(baseT).*.92.*.5, [1, mn]).*repmat(obj.BubbleSize(1) + sqrt(tRatio).*diff(obj.BubbleSize), [length(baseT), 1]) + repmat(rows, [length(baseT), 1]);
+                    obj.patchHdl = fill(obj.ax, obj.PatchX, obj.PatchY, datas(:), 'EdgeColor','k', 'LineWidth',1, 'FaceAlpha',.7);
                     obj.patchHdl = reshape(obj.patchHdl, sz);
                 case 'arrect'
                     tRatio2 = max(0, 4*(tRatio - 0.75));
@@ -672,7 +684,7 @@ classdef SHeatmap < handle
 
             % Use different box colors for different Formats (为不同 Format 设置不同框颜色)
             switch lower(obj.Format)
-                case {'sq', 'rrect', 'shade', 'c2rect', '3d', 'sqfull'}
+                case {'sq', 'rrect', 'shade', 'c2rect', '3d', 'sqfull', 'bubble'}
                     set(obj.boxHdl, 'Visible','off');
                 case {'bar', 'barh'}
                     set(obj.boxHdl, 'Color',[0,0,0]);
@@ -711,6 +723,10 @@ classdef SHeatmap < handle
                         nX = repmat([-.5,.5,.5,-.5], [length(tind), 1]) + repmat(obj.CP(nanC).', [1, 4]);
                         nY = repmat([-.5,-.5,.5,.5], [length(tind), 1]) + repmat(obj.RP(nanR).', [1, 4]);
                         set(obj.patchHdl(tind), 'FaceColor', [.8,.8,.8], 'EdgeColor','none');
+                    elseif strcmpi(obj.Format, 'bubble')
+                        nX = repmat([-.5,.5,.5,-.5], [length(tind), 1]) + repmat(obj.CP(nanC).', [1, 4]);
+                        nY = repmat([-.5,-.5,.5,.5], [length(tind), 1]) + repmat(obj.RP(nanR).', [1, 4]);
+                        set(obj.patchHdl(tind), 'FaceColor', 'none', 'EdgeColor','none');
                     else
                         nX = repmat([-.5,.5,.5,-.5].*.98, [length(tind), 1]) + repmat(obj.CP(nanC).', [1, 4]);
                         nY = repmat([-.5,-.5,.5,.5].*.98, [length(tind), 1]) + repmat(obj.RP(nanR).', [1, 4]); 
@@ -791,6 +807,9 @@ classdef SHeatmap < handle
             if strcmpi(obj.Format, '3d')
                 obj.setFrame(); axis(obj.ax, 'tight');
             end
+            if strcmpi(obj.Format, 'bubble')
+                obj.setExtGrid()
+            end
 
             addlistener(obj.fig, 'Colormap', 'PostSet', @(src, evt) obj.refreshTxtColor(src, evt));
             addlistener(obj.ax , 'Colormap', 'PostSet', @(src, evt) obj.refreshTxtColor(src, evt));
@@ -819,6 +838,20 @@ classdef SHeatmap < handle
             %   用 Mat 替换 obj.Data，更新每个面片的颜色数据，并更新显示的文本标签(如有)。
             if isequal(size(obj.Data), size(Mat)) && isequal(isnan(obj.Data), isnan(Mat))
                 obj.Data = Mat;
+                obj.maxV = max(max(abs(obj.Data)));
+                if any(any(obj.Data < 0))
+                    try 
+                        caxis(obj.ax, obj.maxV .* [-1, 1]) 
+                    catch
+                        clim(obj.ax,  obj.maxV .* [-1, 1])
+                    end
+                else
+                    try 
+                        caxis(obj.ax, obj.maxV .* [0, 1])
+                    catch
+                        clim(obj.ax,  obj.maxV .* [0, 1]),
+                    end
+                end
                 set(obj.patchHdl, {'CData'}, num2cell(obj.Data(:), 2))
                 if obj.txtShown
                     dataVec = obj.Data(:); 
@@ -1155,6 +1188,108 @@ classdef SHeatmap < handle
 % =========================================================================
 % Set properties for grid handle (设置网格样式)
 % =========================================================================  
+        function varargout = setExtGrid(obj, varargin)
+            % obj.setExtGrid(varargin) - Set properties for extended grid handle (设置扩展网格样式)
+            obj.EGX = []; obj.EGY = [];
+            for gi = 1:max(obj.RowGroup)
+                for gj = 1:max(obj.ColGroup)
+                    posi = obj.RP(obj.RowGroup == gi);
+                    posj = obj.CP(obj.ColGroup == gj);
+                    M = length(posi);
+                    N = length(posj);
+                    switch lower(obj.Type)
+                        case {'full', 'row', 'col'}
+                            posi = obj.RP(obj.RowGroup == gi);
+                            posj = obj.CP(obj.ColGroup == gj);
+                            rowY = posi;
+                            rowX = [posj(1) - .5; posj(end) + .5; nan]*ones(size(rowY));
+                            rowY = [1; 1; nan]*rowY;
+                            colX = posj;
+                            colY = [posi(1) - .5; posi(end) + .5; nan]*ones(size(colX));
+                            colX = [1; 1; nan]*colX;
+                            obj.EGX = [obj.EGX; rowX(:); colX(:)];
+                            obj.EGY = [obj.EGY; rowY(:); colY(:)];
+                        case {'triu0', 'linku', 'varu'}
+                            if gi == gj && length(posi) > 1
+                                gX1 = [1; 1; nan]*posj(2:end);
+                                gY1 = [(posi(1) - .5).*ones(1, N - 1);
+                                    posi(1:(end - 1)) + .5;
+                                    nan(1, N - 1)];
+                                gX2 = [(posj(end) + .5).*ones(1, N - 1);
+                                    posj(2:end) - .5;
+                                    nan(1, N - 1)];
+                                gY2 = [1; 1; nan]*posj(1:(end - 1));
+                                obj.EGX = [obj.EGX; gX1(:); gX2(:)];
+                                obj.EGY = [obj.EGY; gY1(:); gY2(:)];
+                            elseif gj > gi
+                                gX1 = [1; 1; nan]*posj;
+                                gY1 = [posi(1) - .5; posi(end) + .5; nan]*ones(1, N);
+                                gX2 = [posj(1) - .5; posj(end) + .5; nan]*ones(1, M);
+                                gY2 = [1; 1; nan]*posi;
+                                obj.EGX = [obj.EGX; gX1(:); gX2(:)];
+                                obj.EGY = [obj.EGY; gY1(:); gY2(:)];
+                            end
+                        case {'tril0', 'linkl', 'varl'}
+                            if gi == gj && length(posi) > 1
+                                gX1 = [1; 1; nan]*posj(1:(end - 1));
+                                gY1 = [(posi(end) + .5).*ones(1, N - 1);
+                                    posi(2:end) - .5;
+                                    nan(1, N - 1)];
+                                gX2 = [(posj(1) - .5).*ones(1, N - 1);
+                                    posj(1:(end - 1)) + .5;
+                                    nan(1, N - 1)];
+                                gY2 = [1; 1; nan]*posj(2:end);
+                                obj.EGX = [obj.EGX; gX1(:); gX2(:)];
+                                obj.EGY = [obj.EGY; gY1(:); gY2(:)];
+                            elseif gj < gi
+                                gX1 = [1; 1; nan]*posj;
+                                gY1 = [posi(1) - .5; posi(end) + .5; nan]*ones(1, N);
+                                gX2 = [posj(1) - .5; posj(end) + .5; nan]*ones(1, M);
+                                gY2 = [1; 1; nan]*posi;
+                                obj.EGX = [obj.EGX; gX1(:); gX2(:)];
+                                obj.EGY = [obj.EGY; gY1(:); gY2(:)];
+                            end
+                        case  'triu'
+                            if gi == gj
+                                gX1 = [1; 1; nan]*posj;
+                                gY1 = [posi(1).*ones(1, N) - .5; posi + .5; nan(1, N)];
+                                gX2 = [posj(end).*ones(1, N) + .5; posj - .5; nan(1, N)];
+                                gY2 = [1; 1; nan]*posi;
+                                obj.EGX = [obj.EGX; gX1(:); gX2(:)];
+                                obj.EGY = [obj.EGY; gY1(:); gY2(:)];
+                            elseif gj > gi
+                                gX1 = [1; 1; nan]*posj;
+                                gY1 = [posi(1) - .5; posi(end) + .5; nan]*ones(1, N);
+                                gX2 = [posj(1) - .5; posj(end) + .5; nan]*ones(1, M);
+                                gY2 = [1; 1; nan]*posi;
+                                obj.EGX = [obj.EGX; gX1(:); gX2(:)];
+                                obj.EGY = [obj.EGY; gY1(:); gY2(:)];
+                            end
+                        case  'tril'
+                            if gi == gj
+                                gX1 = [1; 1; nan]*posj;
+                                gY1 = [posi - .5; posi(end).*ones(1, N) + .5; nan(1, N)];
+                                gX2 = [posj(1).*ones(1, N) - .5; posj + .5; nan(1, N)];
+                                gY2 = [1; 1; nan]*posi;
+                                obj.EGX = [obj.EGX; gX1(:); gX2(:)];
+                                obj.EGY = [obj.EGY; gY1(:); gY2(:)];
+                            elseif gj < gi
+                                gX1 = [1; 1; nan]*posj;
+                                gY1 = [posi(1) - .5; posi(end) + .5; nan]*ones(1, N);
+                                gX2 = [posj(1) - .5; posj(end) + .5; nan]*ones(1, M);
+                                gY2 = [1; 1; nan]*posi;
+                                obj.EGX = [obj.EGX; gX1(:); gX2(:)];
+                                obj.EGY = [obj.EGY; gY1(:); gY2(:)];
+                            end
+                    end
+                end
+            end
+            set(obj.extGridHdl, 'XData',obj.EGX, 'YData',obj.EGY, varargin{:})
+
+            if nargout == 1
+                varargout = {obj};
+            end
+        end
         function varargout = setGrid(obj, varargin)
             % obj.setGrid(varargin) - Set properties for grid handle (设置网格样式)
             obj.GX = []; obj.GY = [];
@@ -1587,6 +1722,9 @@ classdef SHeatmap < handle
 
             if ~all(isnan(obj.GX))
                 obj.setGrid();
+            end
+            if ~all(isnan(obj.EGX))
+                obj.setExtGrid();
             end
             if strcmpi(obj.Format, '3d') || strcmpi(obj.frameHdl.Visible, 'on')
                 obj.setFrame();
@@ -2518,6 +2656,7 @@ classdef SHeatmap < handle
             if (abs(diff(obj.TLim)) < eps && (strcmpi(obj.Format, 'sq') || ...
                     strcmpi(obj.Format, 'asq') || ...
                     strcmpi(obj.Format, 'circ') || ...
+                    strcmpi(obj.Format, 'bubble') || ...
                     strcmpi(obj.Format, 'acirc') || ...
                     strcmpi(obj.Format, 'bcirc') || ...
                     strcmpi(obj.Format, 'cust') || ...
@@ -2551,6 +2690,11 @@ classdef SHeatmap < handle
                     [nX, nY] = getNewXY(obj.GX, obj.GY, OXLim, OYLim, obj.XLim, obj.YLim, obj.TLim);
                     obj.gridHdl.XData = nX; obj.gridHdl.YData = nY;
                     end
+                    % Set X, Y, Theta Lim for extGridHdl
+                    if ~all(isnan(obj.EGX))
+                        [nX, nY] = getNewXY(obj.EGX, obj.EGY, OXLim, OYLim, obj.XLim, obj.YLim, obj.TLim);
+                        obj.extGridHdl.XData = nX; obj.extGridHdl.YData = nY;
+                    end
                 else
                     % Set X, Y, Theta Lim for boxHdl
                     NN = max(size(obj.Data));
@@ -2567,6 +2711,12 @@ classdef SHeatmap < handle
                     X = interpDataNaN(obj.GX, 10); Y = interpDataNaN(obj.GY, 10);
                     [nX, nY] = getNewXY(X, Y, OXLim, OYLim, obj.XLim, obj.YLim, obj.TLim);
                     obj.gridHdl.XData = nX; obj.gridHdl.YData = nY;
+                    end
+                    % Set X, Y, Theta Lim for extGridHdl
+                    if ~all(isnan(obj.EGX))
+                        X = interpDataNaN(obj.EGX, 10); Y = interpDataNaN(obj.EGY, 10);
+                        [nX, nY] = getNewXY(X, Y, OXLim, OYLim, obj.XLim, obj.YLim, obj.TLim);
+                        obj.extGridHdl.XData = nX; obj.extGridHdl.YData = nY;
                     end
                 end
 

@@ -10,7 +10,7 @@ X = randn(20,15) + [(linspace(-1,2.5,20)').*ones(1, 6), (linspace(.5,-.7,20)').*
 Data = corr(X);
 
 figure()
-SHM = SHeatmap(Data, 'Format','acirc', 'TickLength',0, 'TickLabelOffset', 0);
+SHM = SHeatmap(Data, 'Format','bubble', 'TickLength',0, 'TickLabelOffset', 0);
 SHM.draw();
 SHM.setType('triu0');
 SHM.setPatch('EdgeColor','k')
@@ -26,5 +26,3 @@ SHM.setFrame('Visible','off')
 SHM.Colorbar.Location = 'southoutside';
 SHM.ax.YLim(2) = .5;
 colormap(slanCM(97, 32))
-
-

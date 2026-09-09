@@ -310,6 +310,10 @@ classdef SLegend < handle
                         obj.PatchX = obj.SX.*repmat(cos(baseT).*.92.*.5.*obj.IconSize(1), [1, mn]) + repmat(cols, [length(baseT), 1]);
                         obj.PatchY = obj.SY.*repmat(sin(baseT).*.92.*.5.*obj.IconSize(2), [1, mn]) + repmat(rows, [length(baseT), 1]);
                         obj.patchHdl = fill(obj.ax, obj.PatchX, obj.PatchY, datas(:), 'EdgeColor','none', 'LineWidth',.8);
+                    case 'bubble'
+                        obj.PatchX = obj.SX.*repmat(cos(baseT).*.92.*.5, [1, mn]).*repmat(obj.Target.BubbleSize(1) + sqrt(tRatio).*diff(obj.Target.BubbleSize), [length(baseT), 1]) + repmat(cols, [length(baseT), 1]);
+                        obj.PatchY = obj.SY.*repmat(sin(baseT).*.92.*.5, [1, mn]).*repmat(obj.Target.BubbleSize(1) + sqrt(tRatio).*diff(obj.Target.BubbleSize), [length(baseT), 1]) + repmat(rows, [length(baseT), 1]);
+                        obj.patchHdl = fill(obj.ax, obj.PatchX, obj.PatchY, datas(:), 'EdgeColor','k', 'LineWidth',1, 'FaceAlpha',.7);
                     case 'acirc'
                         obj.PatchX = obj.SX.*repmat(cos(baseT).*.92.*.5.*obj.IconSize(1), [1, mn]).*repmat(tRatio, [length(baseT), 1]) + repmat(cols, [length(baseT), 1]);
                         obj.PatchY = obj.SY.*repmat(sin(baseT).*.92.*.5.*obj.IconSize(2), [1, mn]).*repmat(tRatio, [length(baseT), 1]) + repmat(rows, [length(baseT), 1]);
