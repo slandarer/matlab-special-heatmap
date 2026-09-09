@@ -98,6 +98,8 @@ classdef SHeatmap < handle
 %   setPatch                 - Set properties for all patch objects (为所有填充图形设置属性)
 %   setRowLabel              - Set properties for all row label text objects (设置所有行标签的属性)
 %   setColLabel              - Set properties for all col label text objects (设置所有列标签的属性)
+%   setRowTickIndices        - Set indices of row ticks to display (设置要显示的行刻度索引)
+%   setColTickIndices        - Set indices of col ticks to display (设置要显示的列刻度索引)
 %   setRowGroupLabel         - Set properties for all row-group label text objects (设置所有行分组标签的属性)
 %   setColGroupLabel         - Set properties for all col-group label text objects (设置所有列分组标签的属性)
 %   setRowLabelLocation      - Move row labels to specified location (设置行标签位置)
@@ -109,6 +111,9 @@ classdef SHeatmap < handle
 %                              colormap axis limits (CLim) and the colormap itself
 %                              (根据当前数值将颜色映射固定到每个填充图形，使其不再随颜色轴范围或颜色映射表的变化而改变)
 %   setXYTLim                - Set X, Y, and Theta limits for the heatmap (设置热图 X轴、 Y轴、角度范围)
+%   setCData                 - Reset obj.Data and per-cell CData while preserving the geometric shape of the heatmap,
+%                              enabling shape and color to encode different information independently
+%                              (保持热图形状不变，重设 obj.Data 和每个单元格的 CData，使形状和颜色分别编码不同信息)
 
 
 % =========================================================================
@@ -802,12 +807,38 @@ classdef SHeatmap < handle
                 obj.setText();
             end
         end
+% =========================================================================
+% Reset obj.Data and per-cell CData while preserving the geometric shape of the heatmap,
+% enabling shape and color to encode different information independently.
+% 保持热图形状不变，重设 obj.Data 和每个单元格的 CData，使形状和颜色分别编码不同信息。
+% =========================================================================
+        function varargout = setCData(obj, Mat)
+            % obj.setCData(Mat) - Update heatmap data and CData for each cell (更新热图数据和每个单元格的 CData)
+            %   obj = obj.setCData(Mat) replaces obj.Data with Mat and updates the color data
+            %   of each patch cell, and updates text labels if displayed.
+            %   用 Mat 替换 obj.Data，更新每个面片的颜色数据，并更新显示的文本标签(如有)。
+            if isequal(size(obj.Data), size(Mat)) && isequal(isnan(obj.Data), isnan(Mat))
+                obj.Data = Mat;
+                set(obj.patchHdl, {'CData'}, num2cell(obj.Data(:), 2))
+                if obj.txtShown
+                    dataVec = obj.Data(:); 
+                    valid = ~isnan(dataVec);
+                    strCell = cellstr(num2str(dataVec(valid), '%.2f'));
+                    set(obj.textHdl(valid), {'String'}, strCell)
+                    obj.setText()
+                end
+            end
+
+            if nargout == 1
+                varargout = {obj};
+            end
+        end
 
 % =========================================================================
 % Set indices of row/col ticks to display (设置要显示的行列刻度索引)
 % =========================================================================
         function varargout = setRowTickIndices(obj, indices)
-
+            % obj.setRowTickIndices(indices) - Set indices of row ticks to display (设置要显示的行刻度索引)
             if nargin < 2
                 indices = obj.RowTickIndices;
             else
@@ -844,7 +875,7 @@ classdef SHeatmap < handle
         end
 
         function varargout = setColTickIndices(obj, indices)
-
+            % obj.setColTickIndices(indices) - Set indices of col ticks to display (设置要显示的列刻度索引)
             if nargin < 2
                 indices = obj.ColTickIndices;
             else
