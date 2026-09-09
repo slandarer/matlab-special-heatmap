@@ -411,8 +411,8 @@ classdef SHeatmap < handle
 
             obj.XLim = [obj.CP(1) - .5, obj.CP(end) + .5];
             obj.YLim = [obj.RP(1) - .5, obj.RP(end) + .5];
-            obj.ax.XLim = [min(obj.ax.XLim(1), obj.XLim(1)), max(obj.ax.XLim(2), obj.XLim(2))];
-            obj.ax.YLim = [min(obj.ax.YLim(1), obj.YLim(1)), max(obj.ax.YLim(2), obj.YLim(2))];
+            obj.ax.XLim = [obj.XLim(1), max(obj.ax.XLim(2), obj.XLim(2))];
+            obj.ax.YLim = [obj.YLim(1), max(obj.ax.YLim(2), obj.YLim(2))];
             obj.ax.XTick = obj.CP;
             obj.ax.YTick = obj.RP;
             obj.ax.XTickLabel = compose('%d', 1:size(obj.Data, 2));
