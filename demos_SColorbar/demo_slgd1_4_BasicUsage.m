@@ -45,3 +45,6 @@ slgd = SLegend(SHM, 'Tick', [3,2,1], 'TitleString','Significance', 'BasePos',[11
 slgd.draw()
 slgd.setPatch('FaceColor','none', 'EdgeColor','k')
 slgd.setBox('Visible','off')
+
+
+
